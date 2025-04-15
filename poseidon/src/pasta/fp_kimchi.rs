@@ -831,14 +831,22 @@ pub fn params() -> ArithmeticSpongeParams<Fp> {
 
 /// the fp sponge params
 pub fn static_params() -> &'static ArithmeticSpongeParams<Fp> {
-    // Use a shorter name for the static variable
-    #[no_mangle]
-    static mut P: Option<ArithmeticSpongeParams<Fp>> = None;
+    // Create a short static function in a module with short name
+    mod s {
+        use super::*;
 
-    unsafe {
-        if P.is_none() {
-            P = Some(params());
+        #[no_mangle]
+        pub static mut P: Option<ArithmeticSpongeParams<Fp>> = None;
+
+        pub fn get() -> &'static ArithmeticSpongeParams<Fp> {
+            unsafe {
+                if P.is_none() {
+                    P = Some(super::params());
+                }
+                P.as_ref().unwrap()
+            }
         }
-        P.as_ref().unwrap()
     }
+
+    s::get()
 }
