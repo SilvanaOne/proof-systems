@@ -831,13 +831,19 @@ pub fn params() -> ArithmeticSpongeParams<Fp> {
 
 /// the fp sponge params
 pub fn static_params() -> &'static ArithmeticSpongeParams<Fp> {
-    #[no_mangle]
-    static mut P: Option<ArithmeticSpongeParams<Fp>> = None;
+    use alloc::boxed::Box;
 
-    unsafe {
-        if P.is_none() {
-            P = Some(params());
-        }
-        P.as_ref().unwrap()
+    // This is a function that gets called only once and returns a static ref
+    // It won't create a .data section that's writable
+    #[inline(never)]
+    fn create_params() -> &'static ArithmeticSpongeParams<Fp> {
+        // Create the params and leak the memory
+        // This creates a static reference without needing a static variable
+        let p = Box::new(params());
+        Box::leak(p)
     }
+
+    // Create static reference using function-local static
+    static INIT: fn() -> &'static ArithmeticSpongeParams<Fp> = create_params;
+    INIT()
 }
