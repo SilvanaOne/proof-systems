@@ -831,22 +831,20 @@ pub fn params() -> ArithmeticSpongeParams<Fp> {
 
 /// the fp sponge params
 pub fn static_params() -> &'static ArithmeticSpongeParams<Fp> {
-    // Create a short static function in a module with short name
-    mod s {
-        use super::*;
-
-        #[no_mangle]
-        pub static mut P: Option<ArithmeticSpongeParams<Fp>> = None;
-
-        pub fn get() -> &'static ArithmeticSpongeParams<Fp> {
-            unsafe {
-                if P.is_none() {
-                    P = Some(super::params());
-                }
-                P.as_ref().unwrap()
-            }
-        }
+    // Create a hidden, external static storage with a very short name to avoid mangling
+    extern "C" {
+        #[link_name = "X"]
+        static mut X: usize;
     }
 
-    s::get()
+    unsafe {
+        if X == 0 {
+            // First call - allocate and initialize
+            let boxed = Box::new(params());
+            let leak = Box::leak(boxed);
+            X = leak as *const _ as usize;
+        }
+
+        &*(X as *const ArithmeticSpongeParams<Fp>)
+    }
 }
