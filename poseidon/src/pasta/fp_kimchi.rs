@@ -1,5 +1,6 @@
 extern crate alloc;
 use crate::poseidon::ArithmeticSpongeParams;
+use alloc::boxed::Box;
 use alloc::vec;
 use core::str::FromStr;
 use mina_curves::pasta::Fp;
