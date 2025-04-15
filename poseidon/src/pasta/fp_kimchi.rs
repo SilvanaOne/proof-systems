@@ -1,6 +1,5 @@
 extern crate alloc;
 use crate::poseidon::ArithmeticSpongeParams;
-use alloc::boxed::Box;
 use alloc::vec;
 use core::str::FromStr;
 use mina_curves::pasta::Fp;
@@ -832,20 +831,13 @@ pub fn params() -> ArithmeticSpongeParams<Fp> {
 
 /// the fp sponge params
 pub fn static_params() -> &'static ArithmeticSpongeParams<Fp> {
-    // Create a hidden, external static storage with a very short name to avoid mangling
-    extern "C" {
-        #[link_name = "X"]
-        static mut X: usize;
-    }
+    #[no_mangle]
+    static mut P: Option<ArithmeticSpongeParams<Fp>> = None;
 
     unsafe {
-        if X == 0 {
-            // First call - allocate and initialize
-            let boxed = Box::new(params());
-            let leak = Box::leak(boxed);
-            X = leak as *const _ as usize;
+        if P.is_none() {
+            P = Some(params());
         }
-
-        &*(X as *const ArithmeticSpongeParams<Fp>)
+        P.as_ref().unwrap()
     }
 }
