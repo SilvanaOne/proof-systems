@@ -831,6 +831,14 @@ pub fn params() -> ArithmeticSpongeParams<Fp> {
 
 /// the fp sponge params
 pub fn static_params() -> &'static ArithmeticSpongeParams<Fp> {
-    static PARAMS: Lazy<ArithmeticSpongeParams<Fp>> = Lazy::new(params);
-    &PARAMS
+    // Use a shorter name for the static variable
+    #[no_mangle]
+    static mut P: Option<ArithmeticSpongeParams<Fp>> = None;
+
+    unsafe {
+        if P.is_none() {
+            P = Some(params());
+        }
+        P.as_ref().unwrap()
+    }
 }
