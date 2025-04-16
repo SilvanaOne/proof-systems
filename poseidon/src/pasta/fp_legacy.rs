@@ -1458,8 +1458,27 @@ fn params() -> ArithmeticSpongeParams<Fp> {
     }
 }
 
-/// the legacy fp sponge params
+// /// the legacy fp sponge params
+// pub fn static_params() -> &'static ArithmeticSpongeParams<Fp> {
+//     static PARAMS: Lazy<ArithmeticSpongeParams<Fp>> = Lazy::new(params);
+//     &PARAMS
+// }
+
+/// the fp sponge params
 pub fn static_params() -> &'static ArithmeticSpongeParams<Fp> {
-    static PARAMS: Lazy<ArithmeticSpongeParams<Fp>> = Lazy::new(params);
-    &PARAMS
+    use alloc::boxed::Box;
+
+    // This is a function that gets called only once and returns a static ref
+    // It won't create a .data section that's writable
+    #[inline(never)]
+    fn create_params() -> &'static ArithmeticSpongeParams<Fp> {
+        // Create the params and leak the memory
+        // This creates a static reference without needing a static variable
+        let p = Box::new(params());
+        Box::leak(p)
+    }
+
+    // Create static reference using function-local static
+    static INIT: fn() -> &'static ArithmeticSpongeParams<Fp> = create_params;
+    INIT()
 }
